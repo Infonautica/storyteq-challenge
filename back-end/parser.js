@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-export async function parseFile(filePath) {
+export function parseFile(filePath) {
   return new Promise((resolve, reject) => {
     const resovledPath = path.resolve(__dirname, filePath);
     fs.readFile(resovledPath, "utf8", (err, data) => {
@@ -36,4 +36,20 @@ export function parseCSV(data) {
   const parsedRows = rawLines.map((line) => parseCSVLine(line));
   const validRows = parsedRows.filter((row) => row !== null);
   return validRows;
+}
+
+export async function readAndGroupByCompanies(filePath) {
+  const csv = await parseFile(filePath);
+  const records = parseCSV(csv);
+
+  return records.reduce((acc, record) => {
+    const { company } = record;
+
+    if (!acc[company]) {
+      acc[company] = [];
+    }
+
+    acc[company].push(record);
+    return acc;
+  }, {});
 }

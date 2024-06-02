@@ -1,4 +1,4 @@
-import { parseFile, parseCSV } from "./parser.js";
+import { readAndGroupByCompanies } from "./parser.js";
 
 export class ExcessiveCancellationsChecker {
   constructor(filePath) {
@@ -18,27 +18,34 @@ export class ExcessiveCancellationsChecker {
    * Note this should always resolve an array or throw error.
    */
   async companiesInvolvedInExcessiveCancellations() {
-    const csv = await parseFile(this.filePath);
-    const records = parseCSV(csv);
+    const data = await readAndGroupByCompanies(this.filePath);
 
-    const uniqueCompanies = [
-      ...new Set(records.map((record) => record.company)),
-    ];
+    const uniqueCompanies = Object.keys(data);
     const companiesInvolved = uniqueCompanies.filter((company) => {
-      const companyOrders = records.filter(
-        (record) => record.company === company,
-      );
-
-      return this.isCompanyInvolvedInExcessiveCancellations(
-        company,
-        companyOrders,
-      );
+      const companyOrders = data[company];
+      return this.isCompanyInvolvedInExcessiveCancellations(companyOrders);
     });
 
     return companiesInvolved;
   }
 
-  isCompanyInvolvedInExcessiveCancellations(company, companyOrders) {
+  /**
+   * Returns the total number of companies that are not involved in any excessive cancelling.
+   * Note this should always resolve a number or throw error.
+   */
+  async totalNumberOfWellBehavedCompanies() {
+    const data = await readAndGroupByCompanies(this.filePath);
+
+    const uniqueCompanies = Object.keys(data);
+    const wellBehavedCompanies = uniqueCompanies.filter((company) => {
+      const companyOrders = data[company];
+      return !this.isCompanyInvolvedInExcessiveCancellations(companyOrders);
+    });
+
+    return wellBehavedCompanies.length;
+  }
+
+  isCompanyInvolvedInExcessiveCancellations(companyOrders) {
     const companyOrdersCount = companyOrders.length;
     for (let i = 0; i < companyOrdersCount; i += 1) {
       const rangeOrders = getOrdersInRange(companyOrders, i);
@@ -76,14 +83,6 @@ export class ExcessiveCancellationsChecker {
 
     const cancelRatio = cancelQuantity / totalQuantity;
     return cancelRatio > maxRatio;
-  }
-
-  /**
-   * Returns the total number of companies that are not involved in any excessive cancelling.
-   * Note this should always resolve a number or throw error.
-   */
-  async totalNumberOfWellBehavedCompanies() {
-    // TODO: Implement...
   }
 }
 

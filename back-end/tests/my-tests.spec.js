@@ -4,6 +4,13 @@ import { parseCSVLine } from "../parser.js";
 const checker = new ExcessiveCancellationsChecker("./data/trades.csv");
 
 describe("My Tests", () => {
+  describe("totalNumberOfWellBehavedCompanies", () => {
+    it("returns the total of well behaved companies", async () => {
+      const res = await checker.totalNumberOfWellBehavedCompanies();
+      expect(res).toBe(12);
+    });
+  });
+
   describe("isCompanyInvolvedInExcessiveCancellations", () => {
     it("approves when orders within 1min are exccesive cancelations", async () => {
       const rows = [
@@ -14,10 +21,8 @@ describe("My Tests", () => {
       const parsedRows = rows.map((line) => parseCSVLine(line));
       const companyOrders = parsedRows.filter((row) => row !== null);
 
-      const res = checker.isCompanyInvolvedInExcessiveCancellations(
-        "Ape accountants",
-        companyOrders,
-      );
+      const res =
+        checker.isCompanyInvolvedInExcessiveCancellations(companyOrders);
 
       expect(res).toBe(true);
     });
@@ -31,10 +36,8 @@ describe("My Tests", () => {
       const parsedRows = rows.map((line) => parseCSVLine(line));
       const companyOrders = parsedRows.filter((row) => row !== null);
 
-      const res = checker.isCompanyInvolvedInExcessiveCancellations(
-        "Ape accountants",
-        companyOrders,
-      );
+      const res =
+        checker.isCompanyInvolvedInExcessiveCancellations(companyOrders);
 
       expect(res).toBe(false);
     });
@@ -45,10 +48,8 @@ describe("My Tests", () => {
       const parsedRows = rows.map((line) => parseCSVLine(line));
       const companyOrders = parsedRows.filter((row) => row !== null);
 
-      const res = checker.isCompanyInvolvedInExcessiveCancellations(
-        "Ape accountants",
-        companyOrders,
-      );
+      const res =
+        checker.isCompanyInvolvedInExcessiveCancellations(companyOrders);
 
       expect(res).toBe(false);
     });
@@ -71,10 +72,8 @@ describe("My Tests", () => {
       const parsedRows = rows.map((line) => parseCSVLine(line));
       const companyOrders = parsedRows.filter((row) => row !== null);
 
-      const res = checker.isCompanyInvolvedInExcessiveCancellations(
-        "Bank of History",
-        companyOrders,
-      );
+      const res =
+        checker.isCompanyInvolvedInExcessiveCancellations(companyOrders);
 
       expect(res).toBe(false);
     });
