@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 
+// TODO: convert to static properties
 const ORDER_TYPE = {
   NEW_ORDER: "D",
   CANCEL: "F",
@@ -19,7 +20,9 @@ export class ExcessiveCancellationsChecker {
    * Note this should always resolve an array or throw error.
    */
   async companiesInvolvedInExcessiveCancellations() {
-    const records = await this.parseFile();
+    const csv = await parseFile(this.filePath);
+    const records = parseCSV(csv);
+
     const uniqueCompanies = [
       ...new Set(records.map((record) => record.company)),
     ];
@@ -37,21 +40,15 @@ export class ExcessiveCancellationsChecker {
     return companiesInvolved;
   }
 
-  async isCompanyInvolvedInExcessiveCancellations(company, companyOrders) {
-    for (const cursorOrder of companyOrders) {
-      // Define timestamps for the threshold
-      const cursorOrderTime = new Date(cursorOrder.time);
-      const cursorOrderEndTime = new Date(
-        cursorOrderTime + EXCESSIVE_CANCELLATION_THRESHOLD_MS,
-      );
+  isCompanyInvolvedInExcessiveCancellations(company, companyOrders) {
+    const companyOrdersCount = companyOrders.length;
+    for (let i = 0; i < companyOrdersCount; i += 1) {
+      const rangeOrders = getOrdersInRange(companyOrders, i);
+      const { cursorOrder, prevOrders, nextOrders } = rangeOrders;
 
-      // Find all of the oders from the threshold
-      const thresholdOrders = companyOrders.filter((order) => {
-        const orderTime = new Date(order.time);
-        return orderTime >= cursorOrderTime && orderTime <= cursorOrderEndTime;
-      });
+      const thresholdOrders = [...prevOrders, cursorOrder, ...nextOrders];
 
-      if (thresholdOrders.length <= 1) {
+      if (thresholdOrders.length === 1) {
         continue;
       }
 
@@ -68,16 +65,28 @@ export class ExcessiveCancellationsChecker {
         0,
       );
 
-      const cancelRatio = cancelQuantity / totalQuantity;
-      if (cancelRatio > EXCESSIVE_CANCELLATION_RATIO) {
-        console.log(
-          `${company} has ${totalQuantity} orders of which ${cancelQuantity} are cancels, ratio: ${cancelRatio} via ${thresholdOrders.length} records`,
-        );
+      if (this.isExcessiveCancellation(totalQuantity, cancelQuantity)) {
+        const cancelRatio = cancelQuantity / totalQuantity;
+        const info = {
+          index: i,
+          company,
+          totalQuantity,
+          cancelQuantity,
+          cancelRatio,
+          thresholdOrders,
+          totalCompanyOrders: companyOrdersCount,
+        };
+        console.log(JSON.stringify(info, null, 2));
         return true;
       }
     }
 
     return false;
+  }
+
+  isExcessiveCancellation(totalQuantity, cancelQuantity) {
+    const cancelRatio = cancelQuantity / totalQuantity;
+    return cancelRatio > EXCESSIVE_CANCELLATION_RATIO;
   }
 
   /**
@@ -87,37 +96,94 @@ export class ExcessiveCancellationsChecker {
   async totalNumberOfWellBehavedCompanies() {
     //TODO Implement...
   }
+}
 
-  async parseFile() {
-    return new Promise((resolve, reject) => {
-      const resovledPath = path.resolve(__dirname, this.filePath);
-      fs.readFile(resovledPath, "utf8", (err, data) => {
-        if (err) {
-          return reject(err);
-        }
+async function parseFile(filePath) {
+  return new Promise((resolve, reject) => {
+    const resovledPath = path.resolve(__dirname, filePath);
+    fs.readFile(resovledPath, "utf8", (err, data) => {
+      if (err) {
+        return reject(err);
+      }
 
-        const rawLines = data.split("\n");
-        const parsedRows = rawLines.map((line) => this.parseFileLine(line));
-        const validRows = parsedRows.filter((row) => row !== null);
-        resolve(validRows);
-      });
+      resolve(data);
     });
+  });
+}
+
+export function parseCSVLine(line) {
+  const elements = line.split(",").map((item) => item.trim());
+  const [time, company, orderType, quantity] = elements;
+
+  if (!time || !company || !orderType || !quantity) {
+    console.log("Invalid line, skipping parsing:", line);
+    return null;
   }
 
-  parseFileLine(line) {
-    const elements = line.split(",").map((item) => item.trim());
-    const [time, company, orderType, quantity] = elements;
+  return {
+    time,
+    company,
+    orderType,
+    quantity,
+  };
+}
 
-    if (!time || !company || !orderType || !quantity) {
-      console.log("Invalid line, skipping parsing:", line);
-      return null;
+export function parseCSV(data) {
+  const rawLines = data.split("\n");
+  const parsedRows = rawLines.map((line) => parseCSVLine(line));
+  const validRows = parsedRows.filter((row) => row !== null);
+  return validRows;
+}
+
+export function getOrdersInRange(orders, cursorIndex) {
+  const cursorOrder = orders[cursorIndex];
+  const orderTime = new Date(cursorOrder.time);
+  const startTime = new Date(
+    orderTime.valueOf() - EXCESSIVE_CANCELLATION_THRESHOLD_MS,
+  );
+  const endTime = new Date(
+    orderTime.valueOf() + EXCESSIVE_CANCELLATION_THRESHOLD_MS,
+  );
+
+  // Get previous orders
+  const prevOrders = [];
+  let prevOrderIndex = cursorIndex - 1;
+
+  while (true) {
+    const prevOrder = orders[prevOrderIndex];
+    if (!prevOrder) {
+      break;
     }
 
-    return {
-      time,
-      company,
-      orderType,
-      quantity,
-    };
+    const orderTime = new Date(prevOrder.time);
+    if (orderTime >= startTime && orderTime <= endTime) {
+      prevOrders.push(prevOrder);
+    } else {
+      break;
+    }
+
+    prevOrderIndex -= 1;
   }
+
+  // Get next orders
+  const nextOrders = [];
+  let nextOrderIndex = cursorIndex + 1;
+
+  while (true) {
+    const nextOrder = orders[nextOrderIndex];
+    if (!nextOrder) {
+      break;
+    }
+
+    const orderTime = new Date(nextOrder.time);
+    if (orderTime >= startTime && orderTime <= endTime) {
+      nextOrders.push(nextOrder);
+    } else {
+      break;
+    }
+
+    nextOrderIndex += 1;
+  }
+
+  return { cursorOrder, prevOrders, nextOrders };
 }
