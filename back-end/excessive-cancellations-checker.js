@@ -1,19 +1,17 @@
-import fs from "fs";
-import path from "path";
-
-// TODO: convert to static properties
-const ORDER_TYPE = {
-  NEW_ORDER: "D",
-  CANCEL: "F",
-};
-
-const EXCESSIVE_CANCELLATION_THRESHOLD_MS = 60_000;
-const EXCESSIVE_CANCELLATION_RATIO = 0.33;
+import { parseFile, parseCSV } from "./parser.js";
 
 export class ExcessiveCancellationsChecker {
   constructor(filePath) {
     this.filePath = filePath;
   }
+
+  static ORDER_TYPE = {
+    NEW_ORDER: "D",
+    CANCEL: "F",
+  };
+
+  static THRESHOLD_MS = 60_000;
+  static MAX_RATIO = 0.33;
 
   /**
    * Returns the list of companies that are involved in excessive cancelling.
@@ -47,13 +45,13 @@ export class ExcessiveCancellationsChecker {
       const { cursorOrder, prevOrders, nextOrders } = rangeOrders;
 
       const thresholdOrders = [...prevOrders, cursorOrder, ...nextOrders];
-
       if (thresholdOrders.length === 1) {
         continue;
       }
 
+      const { CANCEL } = ExcessiveCancellationsChecker.ORDER_TYPE;
       const cancelOrders = thresholdOrders.filter(
-        (order) => order.orderType === ORDER_TYPE.CANCEL,
+        (order) => order.orderType === CANCEL,
       );
 
       const totalQuantity = thresholdOrders.reduce(
@@ -66,17 +64,6 @@ export class ExcessiveCancellationsChecker {
       );
 
       if (this.isExcessiveCancellation(totalQuantity, cancelQuantity)) {
-        const cancelRatio = cancelQuantity / totalQuantity;
-        const info = {
-          index: i,
-          company,
-          totalQuantity,
-          cancelQuantity,
-          cancelRatio,
-          thresholdOrders,
-          totalCompanyOrders: companyOrdersCount,
-        };
-        console.log(JSON.stringify(info, null, 2));
         return true;
       }
     }
@@ -85,8 +72,10 @@ export class ExcessiveCancellationsChecker {
   }
 
   isExcessiveCancellation(totalQuantity, cancelQuantity) {
+    const maxRatio = ExcessiveCancellationsChecker.MAX_RATIO;
+
     const cancelRatio = cancelQuantity / totalQuantity;
-    return cancelRatio > EXCESSIVE_CANCELLATION_RATIO;
+    return cancelRatio > maxRatio;
   }
 
   /**
@@ -94,56 +83,18 @@ export class ExcessiveCancellationsChecker {
    * Note this should always resolve a number or throw error.
    */
   async totalNumberOfWellBehavedCompanies() {
-    //TODO Implement...
+    // TODO: Implement...
   }
-}
-
-async function parseFile(filePath) {
-  return new Promise((resolve, reject) => {
-    const resovledPath = path.resolve(__dirname, filePath);
-    fs.readFile(resovledPath, "utf8", (err, data) => {
-      if (err) {
-        return reject(err);
-      }
-
-      resolve(data);
-    });
-  });
-}
-
-export function parseCSVLine(line) {
-  const elements = line.split(",").map((item) => item.trim());
-  const [time, company, orderType, quantity] = elements;
-
-  if (!time || !company || !orderType || !quantity) {
-    console.log("Invalid line, skipping parsing:", line);
-    return null;
-  }
-
-  return {
-    time,
-    company,
-    orderType,
-    quantity,
-  };
-}
-
-export function parseCSV(data) {
-  const rawLines = data.split("\n");
-  const parsedRows = rawLines.map((line) => parseCSVLine(line));
-  const validRows = parsedRows.filter((row) => row !== null);
-  return validRows;
 }
 
 export function getOrdersInRange(orders, cursorIndex) {
   const cursorOrder = orders[cursorIndex];
+
+  const thresholdMs = ExcessiveCancellationsChecker.THRESHOLD_MS;
+
   const orderTime = new Date(cursorOrder.time);
-  const startTime = new Date(
-    orderTime.valueOf() - EXCESSIVE_CANCELLATION_THRESHOLD_MS,
-  );
-  const endTime = new Date(
-    orderTime.valueOf() + EXCESSIVE_CANCELLATION_THRESHOLD_MS,
-  );
+  const startTime = new Date(orderTime.valueOf() - thresholdMs);
+  const endTime = new Date(orderTime.valueOf() + thresholdMs);
 
   // Get previous orders
   const prevOrders = [];
