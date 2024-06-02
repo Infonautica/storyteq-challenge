@@ -1,14 +1,14 @@
 import { readAndGroupByCompanies } from "./parser.js";
 
+const ORDER_TYPE = {
+  NEW_ORDER: "D",
+  CANCEL: "F",
+};
+
 export class ExcessiveCancellationsChecker {
   constructor(filePath) {
     this.filePath = filePath;
   }
-
-  static ORDER_TYPE = {
-    NEW_ORDER: "D",
-    CANCEL: "F",
-  };
 
   static THRESHOLD_MS = 60_000;
   static MAX_RATIO = 0.33;
@@ -48,29 +48,27 @@ export class ExcessiveCancellationsChecker {
   isCompanyInvolvedInExcessiveCancellations(companyOrders) {
     const companyOrdersCount = companyOrders.length;
     for (let i = 0; i < companyOrdersCount; i += 1) {
-      const rangeOrders = getOrdersInRange(companyOrders, i);
-      const { cursorOrder, prevOrders, nextOrders } = rangeOrders;
+      const thresholdOrders = getOrdersInRange(companyOrders, i);
 
-      const thresholdOrders = [...prevOrders, cursorOrder, ...nextOrders];
-      if (thresholdOrders.length === 1) {
-        continue;
-      }
+      const ordersCount = thresholdOrders.length;
+      let totalQuantity = 0;
+      let cancelQuantity = 0;
 
-      const { CANCEL } = ExcessiveCancellationsChecker.ORDER_TYPE;
-      const cancelOrders = thresholdOrders.filter(
-        (order) => order.orderType === CANCEL,
+      thresholdOrders.forEach((order) => {
+        const orderQuanity = parseInt(order.quantity, 10);
+        const isCancel = order.orderType === ORDER_TYPE.CANCEL;
+
+        totalQuantity += orderQuanity;
+        cancelQuantity += isCancel ? orderQuanity : 0;
+      });
+
+      const isExcessive = this.isExcessiveCancellation(
+        ordersCount,
+        totalQuantity,
+        cancelQuantity,
       );
 
-      const totalQuantity = thresholdOrders.reduce(
-        (acc, order) => acc + parseInt(order.quantity, 10),
-        0,
-      );
-      const cancelQuantity = cancelOrders.reduce(
-        (acc, order) => acc + parseInt(order.quantity, 10),
-        0,
-      );
-
-      if (this.isExcessiveCancellation(totalQuantity, cancelQuantity)) {
+      if (isExcessive) {
         return true;
       }
     }
@@ -78,7 +76,11 @@ export class ExcessiveCancellationsChecker {
     return false;
   }
 
-  isExcessiveCancellation(totalQuantity, cancelQuantity) {
+  isExcessiveCancellation(ordersCount, totalQuantity, cancelQuantity) {
+    if (ordersCount === 1) {
+      return false;
+    }
+
     const maxRatio = ExcessiveCancellationsChecker.MAX_RATIO;
 
     const cancelRatio = cancelQuantity / totalQuantity;
@@ -95,10 +97,10 @@ export function getOrdersInRange(orders, cursorIndex) {
   const startTime = new Date(orderTime.valueOf() - thresholdMs);
   const endTime = new Date(orderTime.valueOf() + thresholdMs);
 
-  // Get previous orders
-  const prevOrders = [];
-  let prevOrderIndex = cursorIndex - 1;
+  const ordersInRange = [];
 
+  // Get previous orders
+  let prevOrderIndex = cursorIndex - 1;
   while (true) {
     const prevOrder = orders[prevOrderIndex];
     if (!prevOrder) {
@@ -106,8 +108,8 @@ export function getOrdersInRange(orders, cursorIndex) {
     }
 
     const orderTime = new Date(prevOrder.time);
-    if (orderTime >= startTime && orderTime <= endTime) {
-      prevOrders.push(prevOrder);
+    if (orderTime >= startTime) {
+      ordersInRange.unshift(prevOrder);
     } else {
       break;
     }
@@ -115,10 +117,11 @@ export function getOrdersInRange(orders, cursorIndex) {
     prevOrderIndex -= 1;
   }
 
-  // Get next orders
-  const nextOrders = [];
-  let nextOrderIndex = cursorIndex + 1;
+  // Add current order in the middle
+  ordersInRange.push(cursorOrder);
 
+  // Get next orders
+  let nextOrderIndex = cursorIndex + 1;
   while (true) {
     const nextOrder = orders[nextOrderIndex];
     if (!nextOrder) {
@@ -126,8 +129,8 @@ export function getOrdersInRange(orders, cursorIndex) {
     }
 
     const orderTime = new Date(nextOrder.time);
-    if (orderTime >= startTime && orderTime <= endTime) {
-      nextOrders.push(nextOrder);
+    if (orderTime <= endTime) {
+      ordersInRange.push(nextOrder);
     } else {
       break;
     }
@@ -135,5 +138,5 @@ export function getOrdersInRange(orders, cursorIndex) {
     nextOrderIndex += 1;
   }
 
-  return { cursorOrder, prevOrders, nextOrders };
+  return ordersInRange;
 }
