@@ -77,5 +77,21 @@ describe("My Tests", () => {
 
       expect(res).toBe(false);
     });
+
+    it("rejects when the gap uis too big", async () => {
+      const rows = [
+        "2015-05-21 17:40:20,Bank of History,F,100",
+        "2015-05-21 17:41:20,Bank of History,D,500",
+        "2015-05-21 17:42:20,Bank of History,F,1000",
+      ];
+
+      const parsedRows = rows.map((line) => parseCSVLine(line));
+      const companyOrders = parsedRows.filter((row) => row !== null);
+
+      const res =
+        checker.isCompanyInvolvedInExcessiveCancellations(companyOrders);
+
+      expect(res).toBe(false);
+    });
   });
 });
