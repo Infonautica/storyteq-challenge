@@ -5,6 +5,7 @@
 The project is based on vue-start and includes the following features:
 
 - TypeScript
+- Eslint
 - Vue 3
 - Pinia
 - Vite

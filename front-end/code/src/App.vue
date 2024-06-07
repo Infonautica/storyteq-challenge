@@ -72,7 +72,7 @@ const booksStore = useBooksSearchStore()
 <template>
   <main class="main">
     <div class="main-half">
-      <AutoComplete ype="cities" label="Cities" :data="citiesData" :store="citiesStore" />
+      <AutoComplete type="cities" label="Cities" :data="citiesData" :store="citiesStore" />
     </div>
     <div class="main-half">
       <AutoComplete type="books" label="Books" :data="booksData" :store="booksStore" />

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 
 const props = defineProps(['type', 'label', 'store', 'data'])
 
+const inputName = `searchbar-${props.type}`
 const suggestionsId = `suggestions-${props.type}`
 const suggestions = ref([])
 
@@ -30,12 +31,13 @@ const showNoResults = computed(() => showSuggestions.value && isEmptyResult.valu
 <template>
   <div class="wrapper">
     <div class="label-row">
-      <label class="label" for="searchbar">{{ props.label }}:</label>
+      <label class="label" :for="inputName">{{ props.label }}:</label>
     </div>
     <input
       autofocus
       class="searchbar"
       placeholder="You know what to do.."
+      :name="inputName"
       @input="handleChange"
       :value="props.store.searchValue"
       :list="suggestionsId"
