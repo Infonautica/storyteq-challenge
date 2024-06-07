@@ -1,45 +1,38 @@
 # frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+## Summary
 
-## Recommended IDE Setup
+The project is based on vue-start and includes the following features:
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- TypeScript
+- Vue 3
+- Pinia
+- Vite
 
-## Type Support for `.vue` Imports in TS
+## My notes
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+The world is complex enough, so i personally started to lean towards simplicity.
+My vision of the world will obviously be reflected in my code, so you may find things like:
 
-## Customize configuration
+- A simple and minimalistic UI
+- HTML based autofocus instead of JS one
+- Datalist with suggestions instead of custom solutions
+- Single purpose functions
+- No unnecessary dependencies
+- Clear and simple naming concentions
+- etc.
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+## CLI Instructions
 
-## Project Setup
+### How to start
 
 ```sh
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
 ```
 
 ### Run Unit Tests with [Vitest](https://vitest.dev/)
 
 ```sh
 npm run test:unit
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
 ```

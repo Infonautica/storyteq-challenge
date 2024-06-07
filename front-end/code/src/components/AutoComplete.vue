@@ -35,7 +35,7 @@ const showNoResults = computed(() => showSuggestions.value && isEmptyResult.valu
     <input
       autofocus
       class="searchbar"
-      placeholder="Type at least 3 characters to search..."
+      placeholder="You know what to do.."
       @input="handleChange"
       :value="props.store.searchValue"
       :list="suggestionsId"
@@ -49,6 +49,7 @@ const showNoResults = computed(() => showSuggestions.value && isEmptyResult.valu
       <ul v-if="showSuggestions">
         <li v-for="suggestion in suggestions" :key="suggestion">{{ suggestion }}</li>
       </ul>
+      <div v-else>Type at least 3 characters to search...</div>
     </div>
   </div>
 </template>
