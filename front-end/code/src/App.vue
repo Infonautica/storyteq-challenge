@@ -71,10 +71,10 @@ const booksStore = useBooksSearchStore()
 
 <template>
   <main class="main">
-    <div>
+    <div class="main-half">
       <AutoComplete ype="cities" label="Cities" :data="citiesData" :store="citiesStore" />
     </div>
-    <div>
+    <div class="main-half">
       <AutoComplete type="books" label="Books" :data="booksData" :store="booksStore" />
     </div>
   </main>
@@ -83,10 +83,20 @@ const booksStore = useBooksSearchStore()
 <style scoped>
 .main {
   display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100%;
+  width: 100%;
+  padding-top: 5rem;
+}
+
+.main-half {
+  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100%;
-  width: 100%;
+  width: 50%;
+  padding: 1rem;
 }
 </style>

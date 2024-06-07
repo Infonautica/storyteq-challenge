@@ -22,7 +22,9 @@ function handleChange(event: InputEvent) {
   suggestions.value = getSuggestions(newValue)
 }
 
-const showSuggestions = computed(() => props.store.searchValue.length > 3)
+const showSuggestions = computed(() => props.store.searchValue.length > 2)
+const isEmptyResult = computed(() => suggestions.value.length === 0)
+const showNoResults = computed(() => showSuggestions.value && isEmptyResult.value)
 </script>
 
 <template>
@@ -32,7 +34,8 @@ const showSuggestions = computed(() => props.store.searchValue.length > 3)
     </div>
     <input
       autofocus
-      id="searchbar"
+      class="searchbar"
+      placeholder="Type at least 3 characters to search..."
       @input="handleChange"
       :value="props.store.searchValue"
       :list="suggestionsId"
@@ -40,13 +43,19 @@ const showSuggestions = computed(() => props.store.searchValue.length > 3)
     <datalist v-if="showSuggestions" :id="suggestionsId">
       <option v-for="suggestion in suggestions" :key="suggestion" :value="suggestion" />
     </datalist>
+    <div class="results">
+      <div>Results:</div>
+      <div class="no-results-message" v-if="showNoResults">No results found</div>
+      <ul v-if="showSuggestions">
+        <li v-for="suggestion in suggestions" :key="suggestion">{{ suggestion }}</li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .wrapper {
   width: 100%;
-  max-width: 20rem;
 }
 
 .label-row {
@@ -57,11 +66,15 @@ const showSuggestions = computed(() => props.store.searchValue.length > 3)
   text-align: left;
 }
 
-#searchbar {
+.searchbar {
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 0.25rem;
   width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.no-results-message {
 }
 </style>
