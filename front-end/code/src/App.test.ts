@@ -71,4 +71,25 @@ describe('App', () => {
     expect(match1).toBeTruthy()
     expect(match2).toBeTruthy()
   })
+
+  it('Shows matches from both inputs', async () => {
+    render(App)
+
+    const citiesInput = getCitiesInput()
+    await fireEvent.input(citiesInput, { target: { value: 'sant' } })
+
+    const booksInput = getBooksInput()
+    await fireEvent.input(booksInput, { target: { value: 'Pil' } })
+
+    const instructions = screen.queryAllByText('Type at least 3 characters to search...')
+    expect(instructions).toHaveLength(0)
+
+    const match1 = screen.getByText('santiago')
+    const match2 = screen.getByText('santa rosa')
+    expect(match1).toBeTruthy()
+    expect(match2).toBeTruthy()
+
+    const match3 = screen.getByText("Pilgrim's Progress by John Bunyan")
+    expect(match3).toBeTruthy()
+  })
 })
