@@ -1,6 +1,23 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import AutoComplete from './components/AutoComplete.vue'
 import { useCitiesSearchStore, useBooksSearchStore } from './stores/store'
+import { Application } from '@splinetool/runtime'
+
+const canvas = document.getElementById('bg-canvas') as HTMLCanvasElement
+const spline = new Application(canvas)
+spline.load('https://prod.spline.design/YVXsq0Oc1i0I9hF0/scene.splinecode')
+
+const hasClicked = ref(false)
+function handleClickCompany() {
+  if (hasClicked.value) {
+    return
+  }
+
+  const logo = spline.findObjectByName('logo')
+  logo.emitEvent('mouseDown')
+  hasClicked.value = true
+}
 
 function getData() {
   const cities = [
@@ -71,11 +88,16 @@ const booksStore = useBooksSearchStore()
 
 <template>
   <main class="main">
-    <div class="main-half">
-      <AutoComplete type="cities" label="Cities" :data="citiesData" :store="citiesStore" />
+    <div class="welcome">
+      Welcome to Leonid's frontend for <strong @click="handleClickCompany">storyteq</strong>!
     </div>
-    <div class="main-half">
-      <AutoComplete type="books" label="Books" :data="booksData" :store="booksStore" />
+    <div class="main-parts">
+      <div class="main-half">
+        <AutoComplete type="cities" label="Cities" :data="citiesData" :store="citiesStore" />
+      </div>
+      <div class="main-half">
+        <AutoComplete type="books" label="Books" :data="booksData" :store="booksStore" />
+      </div>
     </div>
   </main>
 </template>
@@ -83,12 +105,30 @@ const booksStore = useBooksSearchStore()
 <style scoped>
 .main {
   display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  height: 100%;
+  width: 100%;
+  padding-top: 3rem;
+}
+
+.welcome {
+  padding: 1rem;
+}
+
+.welcome strong {
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.main-parts {
+  display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: flex-start;
   height: 100%;
   width: 100%;
-  padding-top: 5rem;
 }
 
 .main-half {
