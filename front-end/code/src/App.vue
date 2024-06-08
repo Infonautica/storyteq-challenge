@@ -99,4 +99,10 @@ const booksStore = useBooksSearchStore()
   width: 50%;
   padding: 1rem;
 }
+
+#bg-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
 </style>

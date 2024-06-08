@@ -67,6 +67,7 @@ const showNoResults = computed(() => showSuggestions.value && isEmptyResult.valu
 
 .label {
   text-align: left;
+  font-weight: bold;
 }
 
 .searchbar {
@@ -76,6 +77,7 @@ const showNoResults = computed(() => showSuggestions.value && isEmptyResult.valu
   border-radius: 0.25rem;
   width: 100%;
   margin-bottom: 0.5rem;
+  opacity: 0.7;
 }
 
 .no-results-message {
