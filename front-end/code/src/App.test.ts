@@ -38,7 +38,7 @@ describe('App', () => {
     render(App)
 
     const citiesInput = getCitiesInput()
-    await fireEvent.input(citiesInput, { target: { value: 'sa' } })
+    await fireEvent.update(citiesInput, 'sa')
 
     const instructions = screen.getAllByText('Type at least 3 characters to search...')
     expect(instructions).toHaveLength(2)
@@ -48,7 +48,7 @@ describe('App', () => {
     render(App)
 
     const citiesInput = getCitiesInput()
-    await fireEvent.input(citiesInput, { target: { value: 'sand' } })
+    await fireEvent.update(citiesInput, 'sand')
 
     const instructions = screen.getAllByText('Type at least 3 characters to search...')
     expect(instructions).toHaveLength(1)
@@ -61,7 +61,7 @@ describe('App', () => {
     render(App)
 
     const citiesInput = getCitiesInput()
-    await fireEvent.input(citiesInput, { target: { value: 'sant' } })
+    await fireEvent.update(citiesInput, 'sant')
 
     const instructions = screen.getAllByText('Type at least 3 characters to search...')
     expect(instructions).toHaveLength(1)
@@ -76,10 +76,10 @@ describe('App', () => {
     render(App)
 
     const citiesInput = getCitiesInput()
-    await fireEvent.input(citiesInput, { target: { value: 'sant' } })
+    await fireEvent.update(citiesInput, 'sant')
 
     const booksInput = getBooksInput()
-    await fireEvent.input(booksInput, { target: { value: 'Pil' } })
+    await fireEvent.update(booksInput, 'Pil')
 
     const instructions = screen.queryAllByText('Type at least 3 characters to search...')
     expect(instructions).toHaveLength(0)
